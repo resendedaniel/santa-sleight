@@ -41,6 +41,8 @@ variance <- sapply(split_cluster, function(x) {
     var(dists)
 })
 
+cluster <- split_cluster[[sample(length(split_cluster), 1)]]
+
 g <- plotMap(data)
 g_facet <- g + facet_wrap(~cluster)
 g_cluster_size <- ggplot(data.frame(cluster_size), aes(cluster_size)) +
@@ -49,4 +51,15 @@ g_cluster_size <- ggplot(data.frame(cluster_size), aes(cluster_size)) +
 g_cluster_variance <- ggplot(data.frame(variance), aes(variance)) +
     geom_histogram(binwidth=5) +
     ggtitle("Variance of each cluster's distance")
-g_cluster_example <- plotCluster(split_cluster[[sample(length(split_cluster), 1)]])
+g_cluster_example <- plotCluster(cluster)
+
+t <- proc.time()
+split_cluster <- sapply(seq(split_cluster), function(i) {
+    output <- optimizeCluster(split_cluster[[i]])
+    t <- proc.time() - t
+    t <- round(t[3], 1)
+    print(paste0(round(i / length(split_cluster), 1), "% ", t, " seconds"))
+    output
+}, simplify=FALSE)
+
+# lapply(split_cluster, plotCluster)
