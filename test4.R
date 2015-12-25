@@ -49,4 +49,4 @@ g_cluster_size <- ggplot(data.frame(cluster_size), aes(cluster_size)) +
 g_cluster_variance <- ggplot(data.frame(variance), aes(variance)) +
     geom_histogram(binwidth=5) +
     ggtitle("Variance of each cluster's distance")
-g_cluster_example <- plotMap(split_cluster[[sample(length(split_cluster), 1)]])
+g_cluster_example <- plotCluster(split_cluster[[sample(length(split_cluster), 1)]])
