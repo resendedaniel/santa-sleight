@@ -3,7 +3,7 @@ library(ggplot2)
 
 file <- "data/gifts.csv"
 raw_data <- read.csv(file)
-# raw_data <- sample_n(raw_data, 10000)
+raw_data <- sample_n(raw_data, 10000)
 
 northPole <- data.frame(Longitude=0, Latitude=90)
 northPoleList <- as.list(northPole)
