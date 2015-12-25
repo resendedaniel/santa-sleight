@@ -17,8 +17,13 @@ data <- raw_data %>%
     mutate(dist = calcDist(Longitude, Latitude)) %>%
     arrange(-dist, -Weight)
 
-g <- ggplot(data, aes(Longitude, Latitude)) +
-    geom_point(aes(size=sqrt(Weight)), alpha=.5) +
-    theme_bw() +
-    theme(legend.position="none")
-g
+plotMap <- function(data) {
+    ggplot(data, aes(Longitude, Latitude, color=factor(cluster))) + 
+        geom_point() +
+        theme(legend.position='none',
+              axis.text.x=element_blank(),
+              axis.text.y=element_blank(),
+              axis.ticks=element_blank())
+}
+
+plotMap(data)

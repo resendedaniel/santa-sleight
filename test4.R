@@ -31,21 +31,8 @@ while(any(!data$picked)) {
     currCluster <- currCluster + 1
 }
 
-g <- ggplot(data, aes(Longitude, Latitude, color=factor(cluster))) + 
-    geom_point() +
-    theme(legend.position='none',
-          axis.text.x=element_blank(),
-          axis.text.y=element_blank(),
-          axis.ticks=element_blank())
-
-g_facet <- g + facet_wrap(~cluster)
-
 split_cluster <- split(data, data$cluster)
-
-ggplot(data.frame(n=sapply(split_cluster, nrow)), aes(n)) +
-    geom_histogram(binwidth=5) +
-    ggtitle("Size ofeach cluster")
-
+cluster_size <- sapply(split_cluster, nrow)
 variance <- sapply(split_cluster, function(x) {
     center <- list(Longitude=mean(x$Longitude), Latitude=mean(x$Latitude))
     dists <- sapply(1:nrow(x), function(i) {
@@ -54,8 +41,12 @@ variance <- sapply(split_cluster, function(x) {
     var(dists)
 })
 
-ggplot(data.frame(variance), aes(variance)) +
+g <- plotMap(data)
+g_facet <- g + facet_wrap(~cluster)
+g_cluster_size <- ggplot(data.frame(cluster_size), aes(cluster_size)) +
+    geom_histogram(binwidth=5) +
+    ggtitle("Size of each cluster")
+g_cluster_variance <- ggplot(data.frame(variance), aes(variance)) +
     geom_histogram(binwidth=5) +
     ggtitle("Variance of each cluster's distance")
-
-
+g_cluster_example <- plotMap(split_cluster[[sample(length(split_cluster), 1)]])
