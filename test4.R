@@ -2,8 +2,12 @@ source("api.R")
 
 data <- data %>% mutate(picked = FALSE)
 
+print("Clustering")
+t0 <- proc.time()
+clusteringTime <- data.frame(x=numeric(0), t=numeric(0))
 currCluster <- 1
 while(any(!data$picked)) {
+    t1 <- proc.time()
     cat("Cluster #", currCluster, "")
     # New center
     available <- data %>%
@@ -24,11 +28,25 @@ while(any(!data$picked)) {
         }
         i <- i + 1
     }
-    cat("#Gifts: ", length(clusterIds), " | ", "Weight: ", sum(data$Weight[data$GiftId %in% clusterIds]), "\n")
     
     data$picked[data$GiftId %in% clusterIds] <- TRUE
     data$cluster[data$GiftId %in% clusterIds] <- currCluster
     currCluster <- currCluster + 1
+    
+    t <- proc.time() - t0
+    clusteringTime <- rbind(clusteringTime,
+                            data.frame(x=1 - nrow(available) / nrow(data),
+                                       t=t[3]))
+    if(currCluster %% 10 == 0) {
+        slope <- (clusteringTime$t[currCluster] - clusteringTime$t[currCluster - 5]) / (clusteringTime$x[currCluster] - clusteringTime$x[currCluster - 5])
+        ggplot(rbind(clusteringTime,
+                     data.frame(x=1, y=clusteringTime$t[currCluster] + slope * (1 - clusteringTime$x[currCluster]))),
+                aes(x, y=t)) + geom_line()
+    }
+    
+    t <- round(t, 2)
+    cat(round((1 - nrow(available) / nrow(data)) * 100, 2), "%", 
+        " | ",  t, " seconds", "/n")
 }
 
 split_cluster <- split(data, data$cluster)
@@ -51,15 +69,25 @@ g_cluster_size <- ggplot(data.frame(cluster_size), aes(cluster_size)) +
 g_cluster_variance <- ggplot(data.frame(variance), aes(variance)) +
     geom_histogram(binwidth=5) +
     ggtitle("Variance of each cluster's distance")
-g_cluster_example <- plotCluster(cluster)
 
-t <- proc.time()
+print("Optimizing clusters")
+t0 <- proc.time()
 split_cluster <- sapply(seq(split_cluster), function(i) {
     output <- optimizeCluster(split_cluster[[i]])
-    t <- proc.time() - t
+    t <- proc.time() - t0
     t <- round(t[3], 1)
-    print(paste0(round(i / length(split_cluster), 1), "% ", t, " seconds"))
+    print(paste0(round(i / length(split_cluster * 100), 2), "% ", t, " seconds"))
     output
 }, simplify=FALSE)
 
 # lapply(split_cluster, plotCluster)
+
+deliveries <- do.call(rbind, split_cluster) %>%
+    dplyr::select(GiftId, cluster)
+
+# Todos os clusters estão otimizados
+# TODO:
+#     Juntar no formato pedido
+#     Calculo de distância correto
+#     Rodar com tudo (Verificar o custo de criação de clusters)
+

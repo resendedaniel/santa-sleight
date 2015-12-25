@@ -3,7 +3,7 @@ library(ggplot2)
 
 file <- "data/gifts.csv"
 raw_data <- read.csv(file)
-raw_data <- sample_n(raw_data, 10000)
+# raw_data <- sample_n(raw_data, 10000)
 
 northPole <- data.frame(Longitude=0, Latitude=90)
 northPoleList <- as.list(northPole)
@@ -35,7 +35,9 @@ plotCluster <- function(cluster) {
                            xend=cluster$Longitude[-1],
                            y=cluster$Latitude[-n],
                            yend=cluster$Latitude[-1])
-    ggplot(segments, aes(x=x, xend=xend, y=y, yend=yend)) + geom_segment() + geom_point(aes(x, y))
+    ggplot(segments, aes(x=x, xend=xend, y=y, yend=yend)) +
+        geom_segment(linetype="dashed") +
+        geom_point(aes(x, y))
 }
 
 calcClusterDistance <- function(cluster) {
