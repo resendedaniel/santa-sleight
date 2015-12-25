@@ -39,4 +39,23 @@ g <- ggplot(data, aes(Longitude, Latitude, color=factor(cluster))) +
           axis.ticks=element_blank())
 
 g_facet <- g + facet_wrap(~cluster)
-          
+
+split_cluster <- split(data, data$cluster)
+
+ggplot(data.frame(n=sapply(split_cluster, nrow)), aes(n)) +
+    geom_histogram(binwidth=5) +
+    ggtitle("Size ofeach cluster")
+
+variance <- sapply(split_cluster, function(x) {
+    center <- list(Longitude=mean(x$Longitude), Latitude=mean(x$Latitude))
+    dists <- sapply(1:nrow(x), function(i) {
+        calcDist(x$Longitude[i], x$Latitude[i], center)
+    })
+    var(dists)
+})
+
+ggplot(data.frame(variance), aes(variance)) +
+    geom_histogram(binwidth=5) +
+    ggtitle("Variance of each cluster's distance")
+
+
