@@ -7,9 +7,42 @@ for(p in package_list) {
     library(p, character.only = TRUE)
 }
 
+dir.create("data")
+
+readData <- function(n=NULL) {
+    raw_data <- read.csv(file)
+    if(!is.null(n)) {
+        raw_data <- sample_n(raw_data, 200)
+    }
+    
+    raw_data
+}
+
+plotData <- function(data) {
+    g_map <- plotMap(data)
+    g_cluster_size <- ggplot(data.frame(cluster_size), aes(cluster_size)) +
+        geom_histogram(binwidth=5) +
+        ggtitle("Size of each cluster")
+    g_cluster_variance <- ggplot(data.frame(variance), aes(variance)) +
+        geom_histogram(binwidth=5) +
+        ggtitle("Variance of each cluster's distance")
+    
+    print(g_cluster_variance)
+    print(g_cluster_size)
+    print(g_map)
+}
+
+
+processData <- function(data) {
+    data$dist <- sapply(seq(nrow(data)), function(i) calcDist(data$Longitude[i], data$Latitude[i]))
+    data <- data %>%
+        arrange(-dist, -Weight) %>%
+        mutate(picked = FALSE)
+    
+    data
+}
+
 file <- "data/gifts.csv"
-raw_data <- read.csv(file)
-raw_data <- sample_n(raw_data, 10000)
 
 northPole <- data.frame(Longitude=0, Latitude=90)
 northPoleList <- as.list(northPole)
@@ -17,10 +50,6 @@ northPoleList <- as.list(northPole)
 calcDist <- function(long, lat, reference=northPoleList) {
     distHaversine(c(long, lat), c(reference$Longitude, reference$Latitude))
 }
-
-data <- raw_data
-data$dist <- sapply(seq(nrow(data)), function(i) calcDist(data$Longitude[i], data$Latitude[i]))
-data <- data %>% arrange(-dist, -Weight)
 
 plotMap <- function(data) {
     ggplot(data, aes(x=Longitude, y=Latitude, color=factor(cluster))) + 
@@ -75,7 +104,7 @@ optimizeCluster <- function(cluster) {
     cluster_
 }
 
-nurealOptimizeCluster <- function(cluster) {
+neuralOptimizeCluster <- function(cluster, proximity=.0075) {
     t0 <- proc.time()
     cluster_ <- cluster # %>% dplyr::select(Longitude, Latitude, GiftId)
     n <- nrow(cluster_)
@@ -94,7 +123,7 @@ nurealOptimizeCluster <- function(cluster) {
                 row$Latitude <- as.numeric(row$Latitude)
                 calcDist(row$Longitude, row$Latitude, current)
             })
-            candidates <- which(nextDist < min(nextDist) + (median(nextDist) - min(nextDist)) * .015)
+            candidates <- which(nextDist < min(nextDist) + (median(nextDist) - min(nextDist)) * proximity)
             if (length(candidates) == 0) {
                 GiftIds[[i]] <- c(GiftIds[[i]], remain$GiftId[which.min(nextDist)])
             } else {

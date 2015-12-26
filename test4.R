@@ -1,6 +1,7 @@
 source("api.R")
 
-data <- data %>% mutate(picked = FALSE)
+data <- readData(200)
+data <- processData(data)
 
 print("Clustering")
 t0 <- proc.time()
@@ -35,26 +36,29 @@ while(any(!data$picked)) {
     data$cluster[data$GiftId %in% clusterIds] <- currCluster
     
     completed <- mean(data$picked)
-    cat(round(proc.time() - t1, 2)[3], "secs", "|", round(completed * 100, 1), "% completed", "\n")
+    # cat(round(proc.time() - t1, 2)[3], "secs", "|", round(completed * 100, 1), "% completed", "\n")
     t <- round(proc.time() - t0, 2)[3]
     clusteringTime <- rbind(clusteringTime,
                             data.frame(x=completed,
                                        t=t))
-    if(currCluster %% 10 == 0) {
-        slope <- (clusteringTime$t[currCluster] - clusteringTime$t[currCluster - 5]) / (clusteringTime$x[currCluster] - clusteringTime$x[currCluster - 5])
-        elt <- clusteringTime$t[currCluster]
-        eta <- slope * (1 - clusteringTime$x[currCluster])
-        g_time <- ggplot(rbind(clusteringTime,
-                              data.frame(x=1, t=elt + eta)),
-                        aes(x, y=t)) +
-            geom_line() +
-            geom_point() +
-            ggtitle(paste("Estimated time remaining:", round(eta), "secs", "\n",
-                          "Total time:", round(elt + eta)))
-        print(g_time)
-    }
+#     if(currCluster %% 10 == 0) {
+#         slope <- (clusteringTime$t[currCluster] - clusteringTime$t[currCluster - 5]) / (clusteringTime$x[currCluster] - clusteringTime$x[currCluster - 5])
+#         elt <- clusteringTime$t[currCluster]
+#         eta <- slope * (1 - clusteringTime$x[currCluster])
+#         g_time <- ggplot(rbind(clusteringTime,
+#                               data.frame(x=1, t=elt + eta)),
+#                         aes(x, y=t)) +
+#             geom_line() +
+#             geom_point() +
+#             ggtitle(paste("Estimated time remaining:", round(eta), "secs", "\n",
+#                           "Total time:", round(elt + eta)))
+#         print(g_time)
+#     }
     
     currCluster <- currCluster + 1
+}
+if(nrow(data) == 100000) {
+    save(data, file="data/clusters.rda")
 }
 
 split_cluster <- split(data, data$cluster)
@@ -67,22 +71,16 @@ variance <- sapply(split_cluster, function(x) {
     var(dists)
 })
 
-g <- plotMap(data)
-print(g)
-g_cluster_size <- ggplot(data.frame(cluster_size), aes(cluster_size)) +
-    geom_histogram(binwidth=5) +
-    ggtitle("Size of each cluster")
-g_cluster_variance <- ggplot(data.frame(variance), aes(variance)) +
-    geom_histogram(binwidth=5) +
-    ggtitle("Variance of each cluster's distance")
+# plotData(data)
 
-print("Optimizing clusters")
+print("Optimizing clusters", "\n")
 t0 <- proc.time()
 split_cluster <- sapply(seq(split_cluster), function(i) {
-    output <- optimizeCluster(split_cluster[[i]])
+    cat("Otimizing cluser #", i, " / ", length(split_cluster), " = ", round(i / length(split_cluster), 1), "/n")
+    output <- neuralOptimizeCluster(split_cluster[[i]])
     t <- proc.time() - t0
-    t <- round(t[3], 1)
-    print(paste0(round(i / length(split_cluster) * 100, 2), "% ", t, " seconds"))
+    t <- round(t[3], 2)
+    cat("Cluster #", i, "optimized. ", t, " seconds. ETA: ", (length(split_cluster) - i) * t, "\n\n")
     output
 }, simplify=FALSE)
 
