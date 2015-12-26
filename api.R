@@ -3,8 +3,8 @@ package_list <- c('dplyr',
                   'ggplot2',
                   'geosphere')
 for(p in package_list) {
-    if(!(p %in% rownames(installed.packages()))) install.packages(p, repos='http://cran.rstudio.com', lib='/usr/local/lib/R/site-library/', dependencies=TRUE)
-    suppressMessages(library(p, character.only = TRUE))
+    if(!(p %in% rownames(installed.packages()))) install.packages(p, repos='http://cran.rstudio.com', lib='/usr/local/lib/R/site-library/')
+    library(p, character.only = TRUE)
 }
 
 readData <- function(n=NULL) {
