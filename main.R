@@ -46,7 +46,7 @@ while(any(!data$picked)) {
     eta <- slope * (1 - clusteringTime$x[currCluster])
     cat(round(proc.time() - t1, 2)[3], "secs", "|", round(completed * 100, 1), "% completed", " | ",
         "ETA:", round(eta) / 60, "mins", " | ",
-        "Total time:", round(elt + eta) / 360, "mins", "\n")
+        "Total time:", round(elt + eta) / 60, "mins", "\n")
 
 #     if(currCluster %% 10 == 0) {
 #         slope <- (clusteringTime$t[currCluster] - clusteringTime$t[currCluster - 5]) / (clusteringTime$x[currCluster] - clusteringTime$x[currCluster - 5])
