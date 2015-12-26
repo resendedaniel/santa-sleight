@@ -1,5 +1,11 @@
-library(dplyr)
-library(ggplot2)
+## Require and install libs
+package_list <- c('dplyr',
+                  'ggplot2',
+                  'geosphere')
+for(p in package_list) {
+    if(!(p %in% rownames(installed.packages()))) install.packages(p, repos='http://cran.rstudio.com', lib='/usr/local/lib/R/site-library/')
+    library(p, character.only = TRUE)
+}
 
 file <- "data/gifts.csv"
 raw_data <- read.csv(file)
@@ -9,13 +15,12 @@ northPole <- data.frame(Longitude=0, Latitude=90)
 northPoleList <- as.list(northPole)
 
 calcDist <- function(long, lat, reference=northPoleList) {
-    # row <- lapply(as.list((row)), as.numeric)
-    sqrt((reference$Longitude - long) ^ 2 + (reference$Latitude - lat) ^ 2)
+    distHaversine(c(long, lat), c(reference$Longitude, reference$Latitude))
 }
 
-data <- raw_data %>%
-    mutate(dist = calcDist(Longitude, Latitude)) %>%
-    arrange(-dist, -Weight)
+data <- raw_data
+data$dist <- sapply(seq(nrow(data)), function(i) calcDist(data$Longitude[i], data$Latitude[i]))
+data <- data %>% arrange(-dist, -Weight)
 
 plotMap <- function(data) {
     ggplot(data, aes(x=Longitude, y=Latitude, color=factor(cluster))) + 

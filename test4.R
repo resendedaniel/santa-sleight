@@ -13,35 +13,44 @@ while(any(!data$picked)) {
     available <- data %>%
         filter(!picked)
     farthest <- as.list(available[1,])
+    available$farthestDist <- sapply(seq(nrow(available)), function(i) calcDist(available$Longitude[i], available$Latitude[i], farthest))
     available <- available %>%
-        mutate(farthestDist = calcDist(Longitude, Latitude, reference=farthest)) %>%
         arrange(farthestDist)
     
+    # Picking points
     currWeight <- 0
     i <- 1
     clusterIds <- integer(0)
-    while(currWeight < 1000 & i <= nrow(available)) {
-        # cat("currWeight: ", currWeight, " - ", "i: ", i, "\n")
-        if(currWeight + available$Weight[i] <= 1000) {
-            clusterIds <- c(clusterIds, available$GiftId[i])
-            currWeight <- currWeight + available$Weight[i]
+    while(currWeight < 1000 & nrow(available)) {
+        if(currWeight + available$Weight[1] <= 1000) {
+            clusterIds <- c(clusterIds, available$GiftId[1])
+            currWeight <- currWeight + available$Weight[1]
+            available <-available[-1, ]
         }
-        i <- i + 1
+        available <- available %>%
+            filter(Weight <= 1000 - currWeight)
     }
     
     data$picked[data$GiftId %in% clusterIds] <- TRUE
     data$cluster[data$GiftId %in% clusterIds] <- currCluster
     
-    cat(round(proc.time() - t1, 2), " secs", "\n")
-    t <- round(proc.time() - t0, 2)
+    completed <- mean(data$picked)
+    cat(round(proc.time() - t1, 2)[3], "secs", "|", round(completed * 100, 1), "% completed", "\n")
+    t <- round(proc.time() - t0, 2)[3]
     clusteringTime <- rbind(clusteringTime,
-                            data.frame(x=1 - nrow(available) / nrow(data),
-                                       t=t[3]))
+                            data.frame(x=completed,
+                                       t=t))
     if(currCluster %% 10 == 0) {
         slope <- (clusteringTime$t[currCluster] - clusteringTime$t[currCluster - 5]) / (clusteringTime$x[currCluster] - clusteringTime$x[currCluster - 5])
-        g_time<- ggplot(rbind(clusteringTime,
-                              data.frame(x=1, t=clusteringTime$t[currCluster] + slope * (1 - clusteringTime$x[currCluster]))),
-                        aes(x, y=t)) + geom_line()
+        elt <- clusteringTime$t[currCluster]
+        eta <- slope * (1 - clusteringTime$x[currCluster])
+        g_time <- ggplot(rbind(clusteringTime,
+                              data.frame(x=1, t=elt + eta)),
+                        aes(x, y=t)) +
+            geom_line() +
+            geom_point() +
+            ggtitle(paste("Estimated time remaining:", round(eta), "secs", "\n",
+                          "Total time:", round(elt + eta)))
         print(g_time)
     }
     
@@ -59,6 +68,7 @@ variance <- sapply(split_cluster, function(x) {
 })
 
 g <- plotMap(data)
+print(g)
 g_cluster_size <- ggplot(data.frame(cluster_size), aes(cluster_size)) +
     geom_histogram(binwidth=5) +
     ggtitle("Size of each cluster")
