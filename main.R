@@ -35,12 +35,19 @@ while(any(!data$picked)) {
     data$picked[data$GiftId %in% clusterIds] <- TRUE
     data$cluster[data$GiftId %in% clusterIds] <- currCluster
     
-    completed <- mean(data$picked)
-    cat(round(proc.time() - t1, 2)[3], "secs", "|", round(completed * 100, 1), "% completed", "\n")
+    # Statistical
     t <- round(proc.time() - t0, 2)[3]
     clusteringTime <- rbind(clusteringTime,
                             data.frame(x=completed,
                                        t=t))
+    completed <- mean(data$picked)
+    slope <- (clusteringTime$t[currCluster] - clusteringTime$t[currCluster - 5]) / (clusteringTime$x[currCluster] - clusteringTime$x[currCluster - 5])
+    elt <- clusteringTime$t[currCluster]
+    eta <- slope * (1 - clusteringTime$x[currCluster])
+    cat(round(proc.time() - t1, 2)[3], "secs", "|", round(completed * 100, 1), "% completed", " | ",
+        "ETA:", round(eta) / 60, "mins", " | ",
+        "Total time:", round(elt + eta) / 360, "mins", "\n")
+
 #     if(currCluster %% 10 == 0) {
 #         slope <- (clusteringTime$t[currCluster] - clusteringTime$t[currCluster - 5]) / (clusteringTime$x[currCluster] - clusteringTime$x[currCluster - 5])
 #         elt <- clusteringTime$t[currCluster]

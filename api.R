@@ -7,8 +7,6 @@ for(p in package_list) {
     suppressMessages(library(p, character.only = TRUE))
 }
 
-dir.create("data")
-
 readData <- function(n=NULL) {
     raw_data <- read.csv(file)
     if(!is.null(n)) {
