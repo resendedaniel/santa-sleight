@@ -37,10 +37,10 @@ while(any(!data$picked)) {
     
     # Statistical
     t <- round(proc.time() - t0, 2)[3]
+    completed <- mean(data$picked)
     clusteringTime <- rbind(clusteringTime,
                             data.frame(x=completed,
                                        t=t))
-    completed <- mean(data$picked)
     slope <- (clusteringTime$t[currCluster] - clusteringTime$t[currCluster - 5]) / (clusteringTime$x[currCluster] - clusteringTime$x[currCluster - 5])
     elt <- clusteringTime$t[currCluster]
     eta <- slope * (1 - clusteringTime$x[currCluster])
