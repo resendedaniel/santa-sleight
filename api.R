@@ -83,7 +83,7 @@ nurealOptimizeCluster <- function(cluster) {
     i <- 1
     # Loop trought lists, lists might increase as new paths are plausible
     while(i <= length(GiftIds)) {
-        cat(i, "/", length(GiftIds), "=", round(i/length(GiftIds)*100,1), "% | ")
+        cat(i, "/", length(GiftIds), "=", round(i/length(GiftIds)*100,2), "% | ")
         nCandidates <- 0
         while(length(GiftIds[[i]]) != n) {
             remain <- cluster_ %>% filter(!GiftId %in% GiftIds[[i]])
@@ -94,7 +94,7 @@ nurealOptimizeCluster <- function(cluster) {
                 row$Latitude <- as.numeric(row$Latitude)
                 calcDist(row$Longitude, row$Latitude, current)
             })
-            candidates <- which(nextDist < min(nextDist) + (median(nextDist) - min(nextDist)) * .025)
+            candidates <- which(nextDist < min(nextDist) + (median(nextDist) - min(nextDist)) * .015)
             if (length(candidates) == 0) {
                 GiftIds[[i]] <- c(GiftIds[[i]], remain$GiftId[which.min(nextDist)])
             } else {
@@ -110,9 +110,13 @@ nurealOptimizeCluster <- function(cluster) {
         }
         cat(nCandidates, "new candidates", "\n")
         i <- i + 1
-        # cluster_ <- cluster_[match(GiftIds, cluster$GiftId), ]
     }
     
     t <- proc.time() - t0
-    cluster_
+    clusterDists <- sapply(GiftIds, function(x) {
+        calcClusterDistance(cluster_[match(x, cluster$GiftId), ])
+    })
+    
+    best <- GiftIds[[which.min(clusterDists)]]
+    cluster_[match(best, cluster$GiftId), ]
 }
