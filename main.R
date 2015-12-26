@@ -36,7 +36,7 @@ while(any(!data$picked)) {
     data$cluster[data$GiftId %in% clusterIds] <- currCluster
     
     completed <- mean(data$picked)
-    # cat(round(proc.time() - t1, 2)[3], "secs", "|", round(completed * 100, 1), "% completed", "\n")
+    cat(round(proc.time() - t1, 2)[3], "secs", "|", round(completed * 100, 1), "% completed", "\n")
     t <- round(proc.time() - t0, 2)[3]
     clusteringTime <- rbind(clusteringTime,
                             data.frame(x=completed,
