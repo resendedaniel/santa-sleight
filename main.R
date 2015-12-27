@@ -9,7 +9,7 @@ clusteringTime <- data.frame(x=numeric(0), t=numeric(0))
 currCluster <- 1
 while(any(!data$picked)) {
     t1 <- proc.time()
-    cat("Cluster #", currCluster)
+    cat("Cluster #", currCluster, " ")
     # New center
     available <- data %>%
         filter(!picked)
@@ -44,7 +44,7 @@ while(any(!data$picked)) {
     slope <- (clusteringTime$t[currCluster] - clusteringTime$t[currCluster - 5]) / (clusteringTime$x[currCluster] - clusteringTime$x[currCluster - 5])
     elt <- clusteringTime$t[currCluster]
     eta <- slope * (1 - clusteringTime$x[currCluster])
-    cat(round(proc.time() - t1, 2)[3], "s", "|", round(completed * 100, 1), "%", " |",
+    cat(round(proc.time() - t1, 2)[3], "s", "|", round(completed * 100, 1), "%", "|",
         "Elapsed:", round(elt / 60), "m |",
         "ETA:", round(eta / 60), "m |",
         "Total:", round((elt + eta) / 60), "m |\n")
