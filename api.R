@@ -139,6 +139,10 @@ neuralOptimizeCluster <- function(cluster, proximity=.0075) {
         i <- i + 1
     }
     
+    if(!file.exists("data/optimizing_data.rda")) {
+        save(GiftIds, file="data/optimizing_data.rda")
+    }
+    
     t <- proc.time() - t0
     clusterDists <- sapply(GiftIds, function(x) {
         calcClusterDistance(cluster_[match(x, cluster$GiftId), ])

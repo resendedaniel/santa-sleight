@@ -67,6 +67,7 @@ while(any(!data$picked)) {
 }
 if(nrow(data) == 100000) {
     save(data, file="data/clusters.rda")
+    save(clusteringTime, file="data/clustering-time.rda")
 }
 
 split_cluster <- split(data, data$cluster)
