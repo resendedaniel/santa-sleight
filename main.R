@@ -1,6 +1,6 @@
 source("api.R")
 
-data <- readData(200)
+data <- readData()
 data <- processData(data)
 
 print("Clustering")
