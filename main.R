@@ -9,7 +9,7 @@ clusteringTime <- data.frame(x=numeric(0), t=numeric(0))
 currCluster <- 1
 while(any(!data$picked)) {
     t1 <- proc.time()
-    cat("Cluster #", currCluster, "")
+    cat("#", currCluster)
     # New center
     available <- data %>%
         filter(!picked)
