@@ -1,6 +1,6 @@
 source("api.R")
 
-data <- readData()
+data <- readData(200)
 data <- processData(data)
 
 print("Clustering")
@@ -45,8 +45,9 @@ while(any(!data$picked)) {
     elt <- clusteringTime$t[currCluster]
     eta <- slope * (1 - clusteringTime$x[currCluster])
     cat(round(proc.time() - t1, 2)[3], "secs", "|", round(completed * 100, 1), "% completed", " | ",
-        "Estimated Remaining time:", round(eta) / 60, "mins", " | ",
-        "Estimated Total time:", round(elt + eta) / 60, "mins", "\n")
+        "Elapsed time:", round(elt) / 60, "m |\n",
+        "Estimated Remaining time:", round(eta) / 60, "m |\n",
+        "Estimated Total time:", round(elt + eta) / 60, "m |\n")
 
 #     if(currCluster %% 10 == 0) {
 #         slope <- (clusteringTime$t[currCluster] - clusteringTime$t[currCluster - 5]) / (clusteringTime$x[currCluster] - clusteringTime$x[currCluster - 5])
@@ -80,7 +81,7 @@ variance <- sapply(split_cluster, function(x) {
 
 # plotData(data)
 
-print("Optimizing clusters", "\n")
+cat("Optimizing clusters", "\n")
 t0 <- proc.time()
 split_cluster <- sapply(seq(split_cluster), function(i) {
     cat("Otimizing cluser #", i, " / ", length(split_cluster), " = ", round(i / length(split_cluster), 1), "/n")
