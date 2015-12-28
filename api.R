@@ -102,7 +102,7 @@ optimizeCluster <- function(cluster) {
     cluster_
 }
 
-neuralOptimizeCluster <- function(cluster, proximity=.0075) {
+neuralOptimizeCluster <- function(cluster, proximity=.01) {
     t0 <- proc.time()
     cluster_ <- cluster # %>% dplyr::select(Longitude, Latitude, GiftId)
     n <- nrow(cluster_)
