@@ -16,7 +16,7 @@ variance <- sapply(split_cluster, function(x) {
 cat("Optimizing clusters", "\n")
 t0 <- proc.time()
 split_cluster <- sapply(seq(split_cluster), function(i) {
-    cat("Otimizing cluser #", i, " / ", length(split_cluster), " = ", round(i / length(split_cluster), 1), "/n")
+    cat("Otimizing cluser #", i, " / ", length(split_cluster), " = ", round(i / length(split_cluster * 100), 1), "\n")
     # output <- neuralOptimizeCluster(split_cluster[[i]])
     output <- optimizeCluster(split_cluster[[i]])
     t <- proc.time() - t0
