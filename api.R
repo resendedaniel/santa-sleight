@@ -1,10 +1,30 @@
-## Require and install libs
-package_list <- c('dplyr',
-                  'ggplot2',
-                  'geosphere')
-for(p in package_list) {
-    if(!(p %in% rownames(installed.packages()))) install.packages(p, repos='http://cran.rstudio.com', lib='/usr/local/lib/R/site-library/')
-    library(p, character.only = TRUE)
+file <- "data/gifts.csv"
+northPole <- data.frame(Longitude=0, Latitude=90)
+northPoleList <- as.list(northPole)
+
+calcDist <- function(GiftId1, GiftId2=NULL) {
+    i <- which(data$GiftId == GiftId1)
+    dist <- if(is.null(GiftId2)) {
+        p1 <- data[which(data$GiftId == GiftId1), ]
+        x <- distHaversine(c(p1$Longitude, p1$Latitude), c(northPole$Longitude, northPole$Latitude))
+        x
+    } else {
+        x <- distList[[GiftId1]][GiftId2]
+        x <- if(is.na(x)) {
+            p1 <- data[which(data$GiftId == GiftId1), ]
+            p2 <- data[which(data$GiftId == GiftId2), ]
+            x <- distHaversine(c(p1$Longitude, p1$Latitude), c(p2$Longitude, p2$Latitude))
+            distList[[GiftId1]][GiftId2] <<- x
+            distList[[GiftId2]][GiftId1] <<- x
+            
+            x
+        } else {
+            distList[[GiftId1]][GiftId2]
+        }
+        x
+    }
+    
+    dist
 }
 
 readData <- function(n=NULL) {
@@ -14,6 +34,15 @@ readData <- function(n=NULL) {
     }
     
     raw_data
+}
+
+loadCachedDist <- function() {
+    file <- "data/distMatrix.rda"
+    if("cachedDist" %in% ls() & file.exist(file)) {
+        load(file)
+    } else {
+        cachedMatrix <<- matrix()
+    }
 }
 
 plotData <- function(data) {
@@ -32,21 +61,12 @@ plotData <- function(data) {
 
 
 processData <- function(data) {
-    data$dist <- sapply(seq(nrow(data)), function(i) calcDist(data$Longitude[i], data$Latitude[i]))
+    data$dist <- sapply(seq(nrow(data)), function(i) calcDist(data$GiftId[i]))
     data <- data %>%
         arrange(-dist, -Weight) %>%
         mutate(picked = FALSE)
     
     data
-}
-
-file <- "data/gifts.csv"
-
-northPole <- data.frame(Longitude=0, Latitude=90)
-northPoleList <- as.list(northPole)
-
-calcDist <- function(long, lat, reference=northPoleList) {
-    distHaversine(c(long, lat), c(reference$Longitude, reference$Latitude))
 }
 
 plotMap <- function(data) {
@@ -72,13 +92,10 @@ plotCluster <- function(cluster) {
         geom_point(aes(x, y))
 }
 
-calcClusterDistance <- function(cluster) {
-    cluster_ <- cluster %>% dplyr::select(Longitude, Latitude)
-    cluster_ <- do.call(rbind, list(northPole, cluster_, northPole))
-    
+calcClusterDistance <- function(cluster_) {
     sum(sapply(seq(nrow(cluster_) - 1), function(i) {
-        calcDist(cluster_$Longitude[i], cluster_$Latitude[i], cluster_[i+1,])
-    }))
+        calcDist(cluster_$GiftId[i], cluster_$GiftId[i+1])
+    })) + calcDist(cluster_$GiftId[1]) + calcDist(cluster_$GiftId[nrow(cluster_)])
 }
 
 optimizeCluster <- function(cluster) {
@@ -87,12 +104,10 @@ optimizeCluster <- function(cluster) {
     GiftIds <- cluster_$GiftId[which.min(cluster_$dist)]
     while(length(GiftIds) != n) {
         remain <- cluster_ %>% filter(!GiftId %in% GiftIds)
-        current <- cluster_[tail(GiftIds, 1) == cluster_$GiftId, ]
+        current <- cluster_$GiftId[tail(GiftIds, 1) == cluster_$GiftId]
         nextDist <- apply(remain, 1, function(row) {
             row <- as.list(row)
-            row$Longitude <- as.numeric(row$Longitude)
-            row$Latitude <- as.numeric(row$Latitude)
-            calcDist(row$Longitude, row$Latitude, current)
+            calcDist(as.numeric(row$GiftId), current)
         })
         GiftIds <- c(GiftIds, remain$GiftId[which.min(nextDist)])
     }
@@ -102,9 +117,8 @@ optimizeCluster <- function(cluster) {
     cluster_
 }
 
-neuralOptimizeCluster <- function(cluster, proximity=.01) {
+neuralOptimizeCluster <- function(cluster_, proximity=.01) {
     t0 <- proc.time()
-    cluster_ <- cluster # %>% dplyr::select(Longitude, Latitude, GiftId)
     n <- nrow(cluster_)
     GiftIds <- list(cluster_$GiftId[which.min(cluster_$dist)])
     i <- 1
@@ -114,12 +128,10 @@ neuralOptimizeCluster <- function(cluster, proximity=.01) {
         nCandidates <- 0
         while(length(GiftIds[[i]]) != n) {
             remain <- cluster_ %>% filter(!GiftId %in% GiftIds[[i]])
-            current <- cluster_[tail(GiftIds[[i]], 1) == cluster_$GiftId, ]
+            current <- cluster_$GiftId[tail(GiftIds[[i]], 1) == cluster_$GiftId]
             nextDist <- apply(remain, 1, function(row) {
                 row <- as.list(row)
-                row$Longitude <- as.numeric(row$Longitude)
-                row$Latitude <- as.numeric(row$Latitude)
-                calcDist(row$Longitude, row$Latitude, current)
+                calcDist(row$GiftId, current)
             })
             candidates <- which(nextDist < min(nextDist) + (median(nextDist) - min(nextDist)) * proximity)
             if (length(candidates) == 0) {
@@ -135,7 +147,10 @@ neuralOptimizeCluster <- function(cluster, proximity=.01) {
                 GiftIds <- c(GiftIds, newPaths)
             }
         }
-        cat(nCandidates, "new candidates", "\n")
+        t <- (proc.time() - t0)[3]
+        cat(nCandidates, "new candidates", "|",
+            "Elapsed:", round(t / 60), "m", "|",
+            "ETA:", round(t * length(GiftIds) / i / 60), "m", "\n")
         i <- i + 1
     }
     
@@ -145,9 +160,9 @@ neuralOptimizeCluster <- function(cluster, proximity=.01) {
     
     t <- proc.time() - t0
     clusterDists <- sapply(GiftIds, function(x) {
-        calcClusterDistance(cluster_[match(x, cluster$GiftId), ])
+        calcClusterDistance(cluster_[match(x, cluster_$GiftId), ])
     })
     
     best <- GiftIds[[which.min(clusterDists)]]
-    cluster_[match(best, cluster$GiftId), ]
+    cluster_[match(best, cluster_$GiftId), ]
 }
