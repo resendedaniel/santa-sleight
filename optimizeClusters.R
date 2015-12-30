@@ -2,14 +2,6 @@ source("source.R")
 source("api.R")
 load("data/clusters.rda")
 n <- nrow(data)
-if(!"distList" %in% ls()) {
-    distListFile <- "data/distList.rda"
-    if(file.exists(distListFile)) {
-        load(distListFile)
-    } else {
-        distList <- lapply(seq(n), function(i) rep(NA, n))
-    }
-}
 
 split_cluster <- split(data, data$cluster)
 # plotData(data)

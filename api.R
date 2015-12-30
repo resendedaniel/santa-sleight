@@ -6,22 +6,11 @@ calcDist <- function(GiftId1, GiftId2=NULL) {
     i <- which(data$GiftId == GiftId1)
     dist <- if(is.null(GiftId2)) {
         p1 <- data[which(data$GiftId == GiftId1), ]
-        x <- distHaversine(c(p1$Longitude, p1$Latitude), c(northPole$Longitude, northPole$Latitude))
-        x
+        distHaversine(c(p1$Longitude, p1$Latitude), c(northPole$Longitude, northPole$Latitude))
     } else {
-        x <- distList[[GiftId1]][GiftId2]
-        x <- if(is.na(x)) {
-            p1 <- data[which(data$GiftId == GiftId1), ]
-            p2 <- data[which(data$GiftId == GiftId2), ]
-            x <- distHaversine(c(p1$Longitude, p1$Latitude), c(p2$Longitude, p2$Latitude))
-            distList[[GiftId1]][GiftId2] <<- x
-            distList[[GiftId2]][GiftId1] <<- x
-            
-            x
-        } else {
-            distList[[GiftId1]][GiftId2]
-        }
-        x
+        p1 <- data[which(data$GiftId == GiftId1), ]
+        p2 <- data[which(data$GiftId == GiftId2), ]
+        distHaversine(c(p1$Longitude, p1$Latitude), c(p2$Longitude, p2$Latitude))
     }
     
     dist
