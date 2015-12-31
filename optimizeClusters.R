@@ -16,7 +16,7 @@ cat("Optimizing clusters", "\n")
 # split_cluster <- parLapply(cl, seq(split_cluster),  function(i) {
 split_cluster <- lapply(seq(length(split_cluster)), function(i){
     t0 <- proc.time()
-    cat("Otimizing cluser #", i, "/", length(split_cluster), "=", round(i / length(split_cluster) * 100, 1), "%", "\n")
+    cat("Otimizing cluster #", i, "/", length(split_cluster), "=", round(i / length(split_cluster) * 100, 1), "%", "\n")
     output <- neuralOptimizeCluster(split_cluster[[i]], proximity = .01)
     # output <- optimizeCluster(split_cluster[[i]])
     t <- proc.time() - t0

@@ -70,15 +70,24 @@ plotMap <- function(data) {
               axis.ticks=element_blank())
 }
 
+createSegments <- function(cluster) {
+    n <- nrow(cluster)
+    output <- data.frame(x=cluster$Longitude[-n],
+               xend=cluster$Longitude[-1],
+               y=cluster$Latitude[-n],
+               yend=cluster$Latitude[-1])
+    output <- output %>% 
+        mutate(id = paste0(x, xend, y, yend))
+    output$id <- sapply(output$id, digest)
+    
+    output
+}
+
 plotCluster <- function(cluster) {
     rownames(cluster) <- NULL
     cluster <- cluster %>% dplyr::select(Longitude, Latitude)
     # cluster <- do.call(rbind, list(northPole, cluster, northPole))
-    n <- nrow(cluster)
-    segments <- data.frame(x=cluster$Longitude[-n],
-                           xend=cluster$Longitude[-1],
-                           y=cluster$Latitude[-n],
-                           yend=cluster$Latitude[-1])
+    segments <- createSegments(x)
     ggplot(segments, aes(x=x, xend=xend, y=y, yend=yend)) +
         geom_segment(linetype="dashed") +
         geom_point(aes(x, y))
@@ -142,7 +151,7 @@ neuralOptimizeCluster <- function(cluster_, proximity=.01) {
         t <- (proc.time() - t0)[3]
         cat(nCandidates, "new candidates", "|",
             "Elapsed:", round(t / 60), "m", "|",
-            "ETA:", round(t * (1 - length(GiftIds) / i) / 60), "m", "\n")
+            "ETA:", round(t * (length(GiftIds) / i - 1) / 60), "m", "\n")
         i <- i + 1
     }
     
