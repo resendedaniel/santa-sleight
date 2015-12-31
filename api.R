@@ -1,6 +1,7 @@
 file <- "data/gifts.csv"
 northPole <- data.frame(Longitude=0, Latitude=90)
 northPoleList <- as.list(northPole)
+distList <- list()
 
 calcDist <- function(GiftId1, GiftId2=NULL) {
     i <- which(data$GiftId == GiftId1)
@@ -10,7 +11,9 @@ calcDist <- function(GiftId1, GiftId2=NULL) {
     } else {
         p1 <- data[which(data$GiftId == GiftId1), ]
         p2 <- data[which(data$GiftId == GiftId2), ]
-        distHaversine(c(p1$Longitude, p1$Latitude), c(p2$Longitude, p2$Latitude))
+        ind <- digest(sort(c(GiftId1, GiftId2)))
+        distList[[ind]] <<- distHaversine(c(p1$Longitude, p1$Latitude), c(p2$Longitude, p2$Latitude))
+        distList[[ind]]
     }
     
     dist
@@ -139,7 +142,7 @@ neuralOptimizeCluster <- function(cluster_, proximity=.01) {
         t <- (proc.time() - t0)[3]
         cat(nCandidates, "new candidates", "|",
             "Elapsed:", round(t / 60), "m", "|",
-            "ETA:", round(t * length(GiftIds) / i / 60), "m", "\n")
+            "ETA:", round(t * (1 - length(GiftIds) / i) / 60), "m", "\n")
         i <- i + 1
     }
     

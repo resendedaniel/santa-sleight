@@ -21,7 +21,7 @@ split_cluster <- lapply(seq(length(split_cluster)), function(i){
     # output <- optimizeCluster(split_cluster[[i]])
     t <- proc.time() - t0
     t <- round(t[3], 1)
-    cat("Cluster #", i, "optimized. ", t, " seconds. ETA: ", round((length(split_cluster) - i) * t / 60, 1), "m", "\n\n")
+    cat("Cluster #", i, "optimized. ", round(t/60, 1), " seconds. ETA: ", round((length(split_cluster) - i) * t / 60, 1), "m", "\n\n")
     output
 })
 # save(distList, file="data/distList.rda")

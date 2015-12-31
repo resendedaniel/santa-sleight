@@ -1,5 +1,6 @@
 ## Require and install libs
-package_list <- c('doParallel',
+package_list <- c('digest',
+                  'doParallel',
                   'dplyr',
                   'ggplot2',
                   'geosphere')
