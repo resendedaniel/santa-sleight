@@ -87,7 +87,7 @@ plotCluster <- function(cluster) {
     rownames(cluster) <- NULL
     cluster <- cluster %>% dplyr::select(Longitude, Latitude)
     # cluster <- do.call(rbind, list(northPole, cluster, northPole))
-    segments <- createSegments(x)
+    segments <- createSegments(cluster)
     ggplot(segments, aes(x=x, xend=xend, y=y, yend=yend)) +
         geom_segment(linetype="dashed") +
         geom_point(aes(x, y))
@@ -138,14 +138,16 @@ neuralOptimizeCluster <- function(cluster_, proximity=.01) {
             if (length(candidates) == 0) {
                 GiftIds[[i]] <- c(GiftIds[[i]], remain$GiftId[which.min(nextDist)])
             } else {
-                currentState <- GiftIds[[i]]
-                GiftIds[[i]] <- c(currentState, remain$GiftId[candidates[1]])
-                candidates <- candidates[-1]
-                nCandidates <- nCandidates + length(candidates)
-                newPaths <- sapply(candidates, function(nextCandidate) {
-                    c(currentState, remain$GiftId[nextCandidate])
-                }, simplify=FALSE)
-                GiftIds <- c(GiftIds, newPaths)
+                if(length(GiftIds) < 200) {
+                    currentState <- GiftIds[[i]]
+                    GiftIds[[i]] <- c(currentState, remain$GiftId[candidates[1]])
+                    candidates <- candidates[-1]
+                    nCandidates <- nCandidates + length(candidates)
+                    newPaths <- sapply(candidates, function(nextCandidate) {
+                        c(currentState, remain$GiftId[nextCandidate])
+                    }, simplify=FALSE)
+                    GiftIds <- c(GiftIds, newPaths)
+                }
             }
         }
         t <- (proc.time() - t0)[3]
